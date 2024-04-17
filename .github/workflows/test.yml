@@ -29,7 +29,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Setup Env
       run: |
-        sudo apt install x11 -y
+        sudo apt-get update
+        sudo apt install libx11-dev -y
     - name: Build
       run: cargo build --verbose
     - name: Run tests
