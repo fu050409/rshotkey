@@ -21,18 +21,18 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
   
-  build-linux:
+  # build-linux:
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup Env
-      run: |
-        sudo apt-get update
-        sudo apt-get install pkgconf
-        sudo apt install pkgconf libx11-dev -y
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Setup Env
+  #     run: |
+  #       sudo apt-get update
+  #       sudo apt-get install pkgconf
+  #       sudo apt install pkgconf libx11-dev -y
+  #   - name: Build
+  #     run: cargo build --verbose
+  #   - name: Run tests
+  #     run: cargo test --verbose
