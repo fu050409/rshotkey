@@ -1,3 +1,5 @@
+pub mod listener;
+
 use anyhow::Result;
 use rdev::{listen, Button, EventType};
 use tokio::sync::mpsc;
@@ -57,43 +59,3 @@ async fn main() -> Result<()> {
         }
     }
 }
-
-// #[tokio::main]
-// async fn main() -> Result<()> {
-//     let (tx, mut rx) = mpsc::unbounded_channel();
-//     thread::spawn(move || {
-//         listen(move |event| {
-//             tx.send(event)
-//                 .unwrap_or_else(|e| println!("Could not send event {:?}", e));
-//         })
-//         .unwrap();
-//     });
-
-//     // let mut last_time = SystemTime::now();
-//     loop {
-//         let event = match rx.recv().await {
-//             Some(event) => event,
-//             None => {
-//                 continue;
-//             }
-//         };
-//         match event.event_type {
-//             rdev::EventType::ButtonPress(rdev::Button::Left) => {
-//                 let next_event = match rx.recv().await {
-//                     Some(event) => event,
-//                     None => {
-//                         continue;
-//                     }
-//                 };
-//                 let duration = event.time.duration_since(next_event.time)?.as_secs_f64();
-//                 if duration < 0.3 {
-//                     println!("double click!");
-//                 } else {
-//                     println!("clicked once!")
-//                 }
-//                 // last_time = event.time;
-//             }
-//             _ => {}
-//         }
-//     }
-// }
