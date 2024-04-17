@@ -30,7 +30,8 @@ jobs:
     - name: Setup Env
       run: |
         sudo apt-get update
-        sudo apt install libx11-dev -y
+        sudo apt-get install pkgconf
+        sudo apt install pkgconf libx11-dev -y
     - name: Build
       run: cargo build --verbose
     - name: Run tests
