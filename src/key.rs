@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use crate::exception::Error;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BindKey {
     pub keys: Vec<EventType>,
     pub delay_time: Duration,
@@ -18,9 +18,9 @@ impl BindKey {
         }
     }
 
-    pub fn delay(&mut self, time: Duration) -> &mut Self {
+    pub fn delay(&mut self, time: Duration) -> Self {
         self.delay_time = time;
-        self
+        self.to_owned()
     }
 
     pub fn len(&mut self) -> usize {
@@ -46,7 +46,22 @@ impl From<EventType> for BindKey {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+impl Into<Vec<BindKey>> for BindKey {
+    fn into(self) -> Vec<BindKey> {
+        vec![self]
+    }
+}
+
+impl IntoIterator for BindKey {
+    type Item = EventType;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.keys.into_iter()
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct KeySet {
     pub bind_keys: Vec<BindKey>,
 }
@@ -88,6 +103,18 @@ impl From<BindKey> for KeySet {
         Self {
             bind_keys: vec![value],
         }
+    }
+}
+
+impl From<Vec<EventType>> for KeySet {
+    fn from(value: Vec<EventType>) -> Self {
+        KeySet::default().bind(BindKey::new(value))
+    }
+}
+
+impl From<EventType> for KeySet {
+    fn from(value: EventType) -> Self {
+        KeySet::default().bind(BindKey::new(vec![value]))
     }
 }
 

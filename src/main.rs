@@ -128,16 +128,28 @@ async fn main() -> Result<()> {
             EventType::KeyRelease(Key::ControlLeft),
         ]));
 
-    // dbg!(&ctrl_d);
+    let left_click_once: KeySet = vec![EventType::ButtonPress(Button::Left)].into();
+
+    let delay_click = KeySet::default()
+        .bind(
+            BindKey::new(vec![EventType::ButtonPress(Button::Left)])
+                .delay(Duration::from_secs_f64(0.2)),
+        )
+        .bind(BindKey::new(vec![EventType::ButtonRelease(Button::Left)]));
+
+    let double_click = KeySet::default()
+        .bind(
+            BindKey::new(vec![
+                EventType::ButtonPress(Button::Left),
+                EventType::ButtonRelease(Button::Left),
+            ])
+            .delay(Duration::from_secs_f64(0.2)),
+        )
+        .bind(BindKey::new(vec![EventType::ButtonPress(Button::Left)]));
+
     let mut listener = Listener::default();
     listener.register(c, press_c);
-    listener.register(ctrl_d_press, move || {
-        async move {
-            println!("Ctrl_D 被按下！");
-            Ok(())
-        }
-        .boxed()
-    });
+    listener.register(ctrl_d_press, press_ctrl_d);
     listener.register(ctrl_d_release, move || {
         async move {
             println!("Ctrl_D 被释放！");
@@ -152,9 +164,16 @@ async fn main() -> Result<()> {
         }
         .boxed()
     });
-    // listener.register(route_c, press_c);
-    // listener.register(ctrl_d, press_ctrl_d);
-    // listener.register(double_click, double_clicked);
+
+    listener.register(left_click_once, clicked);
+    listener.register(delay_click, move || {
+        async move {
+            println!("鼠标单击后在 0.2s 内释放！");
+            Ok(())
+        }
+        .boxed()
+    });
+    listener.register(double_click, double_clicked);
     listener.listen().await?;
     Ok(())
 }

@@ -2,7 +2,6 @@ use std::process;
 
 use anyhow::Result;
 use futures::{future::BoxFuture, TryFutureExt};
-use log::{debug, info};
 use rdev::{listen, Event};
 use tokio::sync::mpsc;
 
@@ -13,7 +12,7 @@ pub type Hook = fn() -> HookResult;
 
 #[derive(Clone, Debug)]
 pub struct Listener {
-    pub max_history: u32,
+    max_history: usize,
     history: Vec<Event>,
     hooks: Vec<(KeySet, Hook)>,
 }
@@ -21,129 +20,82 @@ pub struct Listener {
 impl Default for Listener {
     fn default() -> Self {
         Self {
+            max_history: 512,
             history: Default::default(),
             hooks: Default::default(),
-            max_history: 128,
         }
     }
 }
 
-pub async fn hook(history: Vec<Event>, hooks: Vec<(KeySet, Hook)>) -> Result<()> {
-    let history_length = history.len();
-    for (mut key_set, hook) in hooks {
-        let mut matched = true;
-        let key_set_length = key_set.len();
-        if key_set_length > history_length {
-            continue;
-        }
-        // println!("Key Set Length: {}", key_set_length);
-        let mut history_to_match = history[history_length - key_set_length..].to_vec();
+pub async fn hook_keyset(mut key_set: KeySet, history: &Vec<Event>, hook: Hook) -> Result<()> {
+    let mut matched = true;
+    let key_set_length = key_set.len();
+    if key_set_length > history.len() {
+        return Ok(());
+    }
 
-        // print!("match:");
-        // for his in &history_to_match {
-        //     print!(" {:?}", his.event_type);
-        // }
-        // print!("\n");
-        for mut bind_key in key_set {
-            // println!("bind_len: {}", bind_key.len());
-            // println!("history_to_match_len: {}", history_to_match.len());
-            let to_idx = bind_key.len();
-            // println!("to: {}", to_idx);
-            let mut checks = history_to_match[..to_idx].to_vec();
-            history_to_match = history_to_match[to_idx..].to_vec();
+    let mut history_to_match = history[history.len() - key_set_length..].to_vec();
 
-            // print!("checks:");
-            // for his in &checks {
-            //     print!(" {:?}", his.event_type);
-            // }
-            // print!("\n");
+    for mut bind_key in key_set {
+        let to_idx = bind_key.len();
+        let mut checks = history_to_match[..to_idx].to_vec();
+        history_to_match = history_to_match[to_idx..].to_vec();
 
+        let last_check = if checks.is_empty() {
+            matched = false;
+            break;
+        } else {
+            checks.last().unwrap().to_owned()
+        };
+        while !checks.is_empty() {
             let mut found = false;
-            while !checks.is_empty() {
-                let mut check_idx = 0;
-                while check_idx < checks.len() {
-                    let mut key_idx = 0;
-                    while key_idx < bind_key.len() {
-                        if checks[check_idx].event_type == bind_key.keys[key_idx] {
-                            found = true;
-                            checks.remove(check_idx);
-                            bind_key.keys.remove(key_idx);
-                            break;
-                        }
-                        key_idx += 1;
-                    }
-                    if found {
+            let mut check_idx = 0;
+            while check_idx < checks.len() {
+                let mut key_idx = 0;
+                while key_idx < bind_key.len() {
+                    if checks[check_idx].event_type == bind_key.keys[key_idx] {
+                        found = true;
+                        checks.remove(check_idx);
+                        bind_key.keys.remove(key_idx);
                         break;
                     }
-                    check_idx += 1;
+                    key_idx += 1;
                 }
-                if !found {
-                    matched = false;
+                if found {
                     break;
                 }
+                check_idx += 1;
             }
             if !found {
                 matched = false;
                 break;
             }
         }
-        if matched {
-            hook().await?;
+
+        if !bind_key.delay_time.is_zero() {
+            let next_time = history_to_match[0].time;
+            let duration = next_time.duration_since(last_check.time)?;
+            if duration > bind_key.delay_time {
+                matched = false;
+                break;
+            }
         }
+    }
+    if matched {
+        hook().await?;
+    };
+    Ok(())
+}
+
+pub async fn hook(history: Vec<Event>, hooks: Vec<(KeySet, Hook)>) -> Result<()> {
+    for (key_set, hook) in hooks {
+        hook_keyset(key_set, &history, hook).await?;
     }
     Ok(())
 }
 
-// pub async fn hook(history: Vec<Event>, hooks: Vec<(Vec<KeySet>, Hook)>) -> Result<()> {
-//     for (hot_keys, hook) in hooks {
-//         let mut checked = true;
-//         for hot_key in hot_keys {
-//             let mut checks = Vec::new();
-//             let mut keys = hot_key.bind_keys.clone();
-//             if history.len() < hot_key.bind_keys.len() {
-//                 checked = false;
-//                 break;
-//             }
-//             history[history.len() - hot_key.bind_keys.len()..].clone_into(&mut checks);
-//             let mut matched = true;
-//             while !checks.is_empty() {
-//                 let mut found = false;
-//                 let mut check_idx = 0;
-//                 while check_idx < checks.len() {
-//                     let mut key_idx = 0;
-//                     while key_idx < keys.len() {
-//                         if checks[check_idx].event_type == keys[key_idx].keys {
-//                             found = true;
-//                             checks.remove(check_idx);
-//                             keys.remove(key_idx);
-//                             break;
-//                         }
-//                         key_idx += 1;
-//                     }
-//                     if found {
-//                         break;
-//                     }
-//                     check_idx += 1;
-//                 }
-//                 if !found {
-//                     matched = false;
-//                     break;
-//                 }
-//             }
-//             if !matched {
-//                 checked = false;
-//                 break;
-//             }
-//         }
-//         if checked {
-//             hook().await?;
-//         }
-//     }
-//     Ok(())
-// }
-
 impl Listener {
-    pub fn new(max_history: u32, history: Vec<Event>, hooks: Vec<(KeySet, Hook)>) -> Self {
+    pub fn new(max_history: usize, history: Vec<Event>, hooks: Vec<(KeySet, Hook)>) -> Self {
         Self {
             history,
             hooks,
@@ -153,6 +105,14 @@ impl Listener {
 
     pub fn register(&mut self, key_set: KeySet, callback: Hook) {
         self.hooks.push((key_set, callback));
+    }
+
+    pub fn unregister(&mut self, key_set: KeySet) {
+        for i in 0..self.hooks.len() {
+            if self.hooks[i].0 == key_set {
+                self.hooks.remove(i);
+            }
+        }
     }
 
     pub async fn listen(&mut self) -> Result<()> {
@@ -173,6 +133,11 @@ impl Listener {
         loop {
             if let Some(event) = rx.recv().await {
                 self.history.push(event);
+
+                if self.history.len() > self.max_history {
+                    self.history = self.history[self.history.len() - 128..].to_vec();
+                }
+
                 tokio::spawn(
                     hook(self.history.clone(), self.hooks.clone())
                         .unwrap_or_else(|e| eprint!("{}", e)),
