@@ -1,11 +1,15 @@
+pub mod event;
+pub mod exception;
+pub mod key;
 pub mod listener;
 
 use std::time::Duration;
 
 use anyhow::Result;
 use futures::FutureExt;
-use listener::{HookResult, HotKey, Listener};
-// use rdev::{listen, Button, EventType};
+use key::{BindKey, KeySet};
+use listener::{HookResult, Listener};
+use rdev::{Button, EventType, Key};
 // use tokio::sync::mpsc;
 // use tokio::time::{timeout, Duration};
 
@@ -98,41 +102,59 @@ fn double_clicked() -> HookResult {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // for i in 0..10 {
-    //     println!("{}", i);
-    // }
     env_logger::init();
+
     // let route_button_left = vec![HotKey::new(
     //     vec![rdev::EventType::ButtonPress(rdev::Button::Left)],
     //     Duration::from_secs(0),
     // )];
-    let route_c = vec![HotKey::new(
-        vec![rdev::EventType::KeyPress(rdev::Key::KeyC)],
-        Duration::from_secs(0),
-    )];
-    let ctrl_d = vec![HotKey::new(
-        vec![
-            rdev::EventType::KeyPress(rdev::Key::KeyD),
-            rdev::EventType::KeyPress(rdev::Key::ControlLeft),
-        ],
-        Duration::from_secs(0),
-    )];
-    let double_click = vec![
-        HotKey::new(
-            vec![rdev::EventType::ButtonPress(rdev::Button::Left)],
-            Duration::from_secs_f64(0.15),
-        ),
-        HotKey::new(
-            vec![rdev::EventType::ButtonRelease(rdev::Button::Left)],
-            Duration::from_secs_f64(0.15),
-        ),
-    ];
+    let c: KeySet = BindKey::new(vec![EventType::KeyPress(Key::KeyC)]).into();
+    let ctrl_d_press: KeySet = BindKey::new(vec![
+        EventType::KeyPress(Key::KeyD),
+        EventType::KeyPress(Key::ControlLeft),
+    ])
+    .into();
+    let ctrl_d_release = KeySet::default().bind(BindKey::new(vec![
+        EventType::KeyRelease(Key::KeyD),
+        EventType::KeyRelease(Key::ControlLeft),
+    ]));
+    let ctrl_d = KeySet::default()
+        .bind(BindKey::new(vec![
+            EventType::KeyPress(Key::KeyD),
+            EventType::KeyPress(Key::ControlLeft),
+        ]))
+        .bind(BindKey::new(vec![
+            EventType::KeyRelease(Key::KeyD),
+            EventType::KeyRelease(Key::ControlLeft),
+        ]));
 
-    let mut listener = Listener::new();
-    // listener.register(route_button_left, clicked);
-    listener.register(route_c, press_c);
-    listener.register(ctrl_d, press_ctrl_d);
-    listener.register(double_click, double_clicked);
+    // dbg!(&ctrl_d);
+    let mut listener = Listener::default();
+    listener.register(c, press_c);
+    listener.register(ctrl_d_press, move || {
+        async move {
+            println!("Ctrl_D 被按下！");
+            Ok(())
+        }
+        .boxed()
+    });
+    listener.register(ctrl_d_release, move || {
+        async move {
+            println!("Ctrl_D 被释放！");
+            Ok(())
+        }
+        .boxed()
+    });
+    listener.register(ctrl_d, move || {
+        async move {
+            println!("完整的 Ctrl_D 过程！");
+            Ok(())
+        }
+        .boxed()
+    });
+    // listener.register(route_c, press_c);
+    // listener.register(ctrl_d, press_ctrl_d);
+    // listener.register(double_click, double_clicked);
     listener.listen().await?;
     Ok(())
 }
