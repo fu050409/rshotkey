@@ -23,7 +23,7 @@ impl BindKey {
         self.to_owned()
     }
 
-    pub fn len(&mut self) -> usize {
+    pub fn len(&self) -> usize {
         self.keys.len()
     }
 }
@@ -52,6 +52,12 @@ impl Into<Vec<BindKey>> for BindKey {
     }
 }
 
+impl Into<Vec<BindKey>> for &BindKey {
+    fn into(self) -> Vec<BindKey> {
+        vec![self.clone()]
+    }
+}
+
 impl IntoIterator for BindKey {
     type Item = EventType;
     type IntoIter = std::vec::IntoIter<Self::Item>;
@@ -76,19 +82,27 @@ impl KeySet {
         self.to_owned()
     }
 
-    pub fn len(&mut self) -> usize {
+    pub fn len(&self) -> usize {
         let mut count: usize = 0;
-        for key in &mut self.bind_keys {
+        for key in &self.bind_keys {
             count += key.len();
         }
         count
     }
 
-    pub fn count(&mut self, idx: usize) -> Result<usize> {
+    pub fn count(&self, idx: usize) -> Result<usize> {
         if idx >= self.bind_keys.len() {
             return Err(Error::OutOfIndex.into());
         }
         Ok(self.bind_keys[idx].len())
+    }
+
+    pub fn last(&self) -> Option<&BindKey> {
+        self.bind_keys.last()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
