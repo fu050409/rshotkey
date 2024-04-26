@@ -1,6 +1,6 @@
 [package]
 name = "rshotkey"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["苏向夜 <fu050409@163.com>"]
 description = "A Hotkey tracker and handler"
 repository = "https://github.com/fu050409/rshotkey"
