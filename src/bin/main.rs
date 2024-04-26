@@ -1,10 +1,13 @@
-use std::time::Duration;
-
+#![allow(unused)]
 use rshotkey::key::{BindKey, KeySet};
 use rshotkey::listener::{HookResult, Listener};
+use rshotkey::rdev::{Button, EventType, Key};
+
 use anyhow::Result;
 use futures::FutureExt;
-use rdev::{Button, EventType, Key};
+use std::process;
+use std::time::Duration;
+use tokio::time;
 
 fn clicked() -> HookResult {
     async move {
@@ -62,7 +65,9 @@ async fn main() -> Result<()> {
             EventType::KeyRelease(Key::ControlLeft),
         ]));
 
-    let left_click_once: KeySet = vec![EventType::ButtonPress(Button::Left)].into();
+    let left_click_once: KeySet = BindKey::new(vec![EventType::ButtonPress(Button::Left)])
+        .delay(Duration::from_secs_f64(1.0))
+        .into();
 
     let delay_click = KeySet::default()
         .bind(
@@ -81,33 +86,49 @@ async fn main() -> Result<()> {
         )
         .bind(BindKey::new(vec![EventType::ButtonPress(Button::Left)]));
 
-    let mut listener = Listener::default();
-    listener.register(c, press_c);
-    listener.register(ctrl_d_press, press_ctrl_d);
-    listener.register(ctrl_d_release, move || {
-        async move {
-            println!("Ctrl_D 被释放！");
-            Ok(())
-        }
-        .boxed()
-    });
-    listener.register(ctrl_d, move || {
-        async move {
-            println!("完整的 Ctrl_D 过程！");
-            Ok(())
-        }
-        .boxed()
-    });
+    let listener = Listener::default();
+    listener.register(c, press_c).await?;
+    listener.register(ctrl_d_press, press_ctrl_d).await?;
+    listener
+        .register(ctrl_d_release, move || {
+            async move {
+                println!("Ctrl_D 被释放！");
+                Ok(())
+            }
+            .boxed()
+        })
+        .await?;
+    listener
+        .register(ctrl_d, move || {
+            async move {
+                println!("完整的 Ctrl_D 过程！");
+                Ok(())
+            }
+            .boxed()
+        })
+        .await?;
 
-    listener.register(left_click_once, clicked);
-    listener.register(delay_click, move || {
-        async move {
-            println!("鼠标单击后在 0.2s 内释放！");
-            Ok(())
-        }
-        .boxed()
-    });
-    listener.register(double_click, double_clicked);
-    listener.listen().await?;
-    Ok(())
+    listener.register(left_click_once, clicked).await?;
+    listener
+        .register(delay_click, move || {
+            async move {
+                println!("鼠标单击后在 0.2s 内释放！");
+                Ok(())
+            }
+            .boxed()
+        })
+        .await?;
+    listener.register(double_click, double_clicked).await?;
+
+    let runner = listener.listen();
+
+    time::sleep(Duration::from_secs(5)).await;
+
+    println!("上一个键: {:?}", listener.priorkey().await);
+
+    runner.await?;
+
+    tokio::signal::ctrl_c().await?;
+
+    process::exit(0);
 }
