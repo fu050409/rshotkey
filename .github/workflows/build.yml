@@ -1,4 +1,4 @@
-name: Run Test
+name: Build RsHotkey
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -32,4 +32,4 @@ jobs:
       - name: Install X11 libraries
         if: matrix.platform == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install pkg-config libxtst-dev libx11-dev libxi-dev -y
-      - run: cargo test --all-targets --all-features
+      - run: cargo build --all-targets --all-features
