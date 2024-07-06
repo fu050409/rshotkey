@@ -32,6 +32,6 @@ jobs:
       - if: matrix.platform == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install pkg-config libx11-dev -y
       - run: sudo find /usr -name xi.pc
-      - run: sudo ls /usr/lib/x86_64-linux-gnu/
-      - run: sudo ls /usr/lib/
+      - run: sudo ls /usr/lib/x86_64-linux-gnu/pkgconfig/
+      - run: sudo ls /usr/lib/X11/
       - run: cargo test --all-targets --all-features
