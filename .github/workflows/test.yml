@@ -28,4 +28,6 @@ jobs:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - if: matrix.platform == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install pkg-config libx11-dev -y
       - run: cargo test --all-targets --all-features
