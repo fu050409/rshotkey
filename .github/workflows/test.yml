@@ -31,5 +31,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - if: matrix.platform == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install pkg-config libx11-dev -y
-      - run: find /usr -name xi.pc
+      - run: sudo find /usr -name xi.pc
+      - run: sudo ls /usr/lib/x86_64-linux-gnu/
+      - run: sudo ls /usr/lib/
       - run: cargo test --all-targets --all-features
