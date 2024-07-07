@@ -6,6 +6,8 @@ pub struct History {
     entries: Vec<Event>,
 }
 
+// unsss
+
 impl History {
     pub fn new(capacity: usize) -> Self {
         Self {
