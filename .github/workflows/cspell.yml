@@ -1,0 +1,19 @@
+name: CSpell
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint-cspell:
+    name: Validating PR title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: streetsidesoftware/cspell-action@v1
+        with:
+          config: "cspell.json"
