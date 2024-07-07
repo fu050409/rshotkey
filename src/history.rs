@@ -33,6 +33,20 @@ impl History {
     pub fn clean(&mut self) {
         self.entries = self.last_n(self.capacity).to_vec();
     }
+
+    pub fn matches(&self, events: &[Event]) -> bool {
+        let last_n = self.last_n(events.len());
+        last_n == events
+    }
+}
+
+impl From<Vec<Event>> for History {
+    fn from(events: Vec<Event>) -> Self {
+        Self {
+            capacity: 256,
+            entries: events,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -89,5 +103,25 @@ mod tests {
         }
         history.push(last.clone());
         assert_eq!(history.last().unwrap(), &last);
+    }
+
+    #[test]
+    fn test_history_from_vec() {
+        let events = vec![
+            Event {
+                time: SystemTime::now(),
+                name: None,
+                event_type: rdev::EventType::KeyPress(rdev::Key::ControlLeft),
+            },
+            Event {
+                time: SystemTime::now(),
+                name: None,
+                event_type: rdev::EventType::KeyRelease(rdev::Key::ControlLeft),
+            },
+        ];
+        let history = History::from(events.clone());
+        assert_eq!(history.entries.len(), 2);
+        let history: History = events.into();
+        assert_eq!(history.entries.len(), 2);
     }
 }

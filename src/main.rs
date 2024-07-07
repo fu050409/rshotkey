@@ -45,46 +45,46 @@ fn double_clicked() -> HookResult {
 async fn main() -> Result<()> {
     env_logger::init();
 
-    let c: KeySet = BindKey::new(vec![EventType::KeyPress(Key::KeyC)]).into();
+    let c: KeySet = BindKey::new(vec![EventType::KeyPress(Key::KeyC).into()]).into();
     let ctrl_d_press: KeySet = BindKey::new(vec![
-        EventType::KeyPress(Key::KeyD),
-        EventType::KeyPress(Key::ControlLeft),
+        EventType::KeyPress(Key::KeyD).into(),
+        EventType::KeyPress(Key::ControlLeft).into(),
     ])
     .into();
     let ctrl_d_release = KeySet::default().bind(BindKey::new(vec![
-        EventType::KeyRelease(Key::KeyD),
-        EventType::KeyRelease(Key::ControlLeft),
+        EventType::KeyRelease(Key::KeyD).into(),
+        EventType::KeyRelease(Key::ControlLeft).into(),
     ]));
     let ctrl_d = KeySet::default()
         .bind(BindKey::new(vec![
-            EventType::KeyPress(Key::KeyD),
-            EventType::KeyPress(Key::ControlLeft),
+            EventType::KeyPress(Key::KeyD).into(),
+            EventType::KeyPress(Key::ControlLeft).into(),
         ]))
         .bind(BindKey::new(vec![
-            EventType::KeyRelease(Key::KeyD),
-            EventType::KeyRelease(Key::ControlLeft),
+            EventType::KeyRelease(Key::KeyD).into(),
+            EventType::KeyRelease(Key::ControlLeft).into(),
         ]));
 
-    let left_click_once: KeySet = BindKey::new(vec![EventType::ButtonPress(Button::Left)])
+    let left_click_once: KeySet = BindKey::new(vec![EventType::ButtonPress(Button::Left).into()])
         .delay(Duration::from_secs_f64(1.0))
         .into();
 
     let delay_click = KeySet::default()
         .bind(
-            BindKey::new(vec![EventType::ButtonPress(Button::Left)])
+            BindKey::new(vec![EventType::ButtonPress(Button::Left).into()])
                 .delay(Duration::from_secs_f64(0.2)),
         )
-        .bind(BindKey::new(vec![EventType::ButtonRelease(Button::Left)]));
+        .bind(BindKey::new(vec![EventType::ButtonRelease(Button::Left).into()]));
 
     let double_click = KeySet::default()
         .bind(
             BindKey::new(vec![
-                EventType::ButtonPress(Button::Left),
-                EventType::ButtonRelease(Button::Left),
+                EventType::ButtonPress(Button::Left).into(),
+                EventType::ButtonRelease(Button::Left).into(),
             ])
             .delay(Duration::from_secs_f64(0.2)),
         )
-        .bind(BindKey::new(vec![EventType::ButtonPress(Button::Left)]));
+        .bind(BindKey::new(vec![EventType::ButtonPress(Button::Left).into()]));
 
     let listener = Listener::default();
     listener.register(c, press_c).await?;
