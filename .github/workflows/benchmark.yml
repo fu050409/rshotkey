@@ -16,7 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install X11 libraries
-        if: matrix.platform == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install pkg-config libxtst-dev libx11-dev libxi-dev -y
       - name: Run benchmarks
         run: cargo bench --verbose
