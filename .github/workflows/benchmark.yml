@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run benchmarks
-        run: cargo bench --verbose --features=bench
+        run: cargo bench --verbose
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
