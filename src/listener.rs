@@ -6,7 +6,7 @@ use futures::{future::BoxFuture, TryFutureExt};
 use rdev::{listen, Event};
 use tokio::{sync::RwLock, task::JoinHandle, time};
 
-use crate::key::KeySet;
+use crate::{history::History, key::KeySet};
 
 pub type HookResult = BoxFuture<'static, Result<()>>;
 pub type Hook = fn() -> HookResult;
@@ -14,7 +14,7 @@ pub type Hook = fn() -> HookResult;
 #[derive(Clone, Debug)]
 pub struct Listener {
     max_history: usize,
-    history: Arc<RwLock<Vec<Event>>>,
+    history: Arc<RwLock<History>>,
     hooks: Arc<RwLock<Vec<(KeySet, Hook)>>>,
 }
 
@@ -29,7 +29,7 @@ impl Default for Listener {
 }
 
 pub async fn run(
-    history_arc: Arc<RwLock<Vec<Event>>>,
+    history_arc: Arc<RwLock<History>>,
     hooks: Arc<RwLock<Vec<(KeySet, Hook)>>>,
     max_history: usize,
 ) {
@@ -53,7 +53,7 @@ pub async fn run(
 
 pub async fn hook_keyset(
     key_set: KeySet,
-    history_arc: Arc<RwLock<Vec<Event>>>,
+    history_arc: Arc<RwLock<History>>,
     hook: Hook,
 ) -> Result<()> {
     let mut matched = true;
@@ -63,7 +63,7 @@ pub async fn hook_keyset(
         return Ok(());
     }
 
-    let mut history_to_match = history[history.len() - key_set_length..].to_vec();
+    let mut history_to_match = history.last_n(key_set_length).to_vec();
 
     let last_key = key_set.last().unwrap();
     let last_delay = last_key.delay_time;
@@ -136,7 +136,7 @@ pub async fn hook_keyset(
 }
 
 pub async fn hook(
-    history: Arc<RwLock<Vec<Event>>>,
+    history: Arc<RwLock<History>>,
     hooks_arc: Arc<RwLock<Vec<(KeySet, Hook)>>>,
 ) -> Result<()> {
     let hooks = hooks_arc.read().await.clone();
@@ -148,7 +148,7 @@ pub async fn hook(
 
 pub async fn handle_event(
     event: Event,
-    history_arc: Arc<RwLock<Vec<Event>>>,
+    history_arc: Arc<RwLock<History>>,
     hooks: Arc<RwLock<Vec<(KeySet, Hook)>>>,
     max_history: usize,
 ) {
@@ -156,7 +156,7 @@ pub async fn handle_event(
     history.push(event);
 
     if history.len() > max_history {
-        *history = history[history.len() - 128..].to_vec();
+        history.clean();
     }
 
     drop(history);
@@ -167,7 +167,7 @@ pub async fn handle_event(
 }
 
 impl Listener {
-    pub fn new(max_history: usize, history: Vec<Event>, hooks: Vec<(KeySet, Hook)>) -> Self {
+    pub fn new(max_history: usize, history: History, hooks: Vec<(KeySet, Hook)>) -> Self {
         Self {
             history: Arc::new(RwLock::new(history)),
             hooks: Arc::new(RwLock::new(hooks)),
