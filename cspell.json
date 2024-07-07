@@ -1,0 +1,14 @@
+{
+    "version": "0.2",
+    "language": "en",
+    "words": [
+        "rdev",
+        "rshotkey",
+        "thiserror"
+    ],
+    "ignorePaths": [
+        "pnpm-lock.yaml",
+        "package.json",
+        ".github/**"
+    ]
+}

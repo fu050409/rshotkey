@@ -124,7 +124,7 @@ async fn main() -> Result<()> {
 
     time::sleep(Duration::from_secs(5)).await;
 
-    println!("上一个键: {:?}", listener.priorkey().await);
+    println!("上一个键: {:?}", listener.prior_key().await);
 
     runner.await?;
 
