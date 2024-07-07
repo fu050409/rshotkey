@@ -1,0 +1,15 @@
+{
+    "version": "0.2",
+    "language": "en",
+    "words": [
+        "rdev",
+        "pnpm",
+        "rshotkey",
+        "thiserror"
+    ],
+    "ignorePaths": [
+        "Cargo.lock",
+        "target/**",
+        ".github/**"
+    ]
+}

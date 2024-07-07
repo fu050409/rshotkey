@@ -193,7 +193,7 @@ impl Listener {
         }
     }
 
-    pub async fn priorkey(&self) -> Option<Event> {
+    pub async fn prior_key(&self) -> Option<Event> {
         self.history.read().await.last().cloned()
     }
 
