@@ -3,12 +3,13 @@
     "language": "en",
     "words": [
         "rdev",
+        "pnpm",
         "rshotkey",
         "thiserror"
     ],
     "ignorePaths": [
-        "pnpm-lock.yaml",
-        "package.json",
+        "Cargo.lock",
+        "target/**",
         ".github/**"
     ]
 }

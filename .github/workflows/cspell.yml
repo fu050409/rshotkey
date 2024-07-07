@@ -16,4 +16,6 @@ jobs:
           submodules: recursive
       - uses: streetsidesoftware/cspell-action@v1
         with:
-          config: "cspell.json"
+          files: "**"
+          config: cspell.json
+          strict: true
