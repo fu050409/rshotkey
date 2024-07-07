@@ -19,3 +19,4 @@ jobs:
           files: "**"
           config: cspell.json
           strict: true
+          verbose: true
