@@ -73,17 +73,17 @@ pub async fn hook_keyset(
         }
     }
     if matched {
-        // let now = SystemTime::now();
-        // if !last_delay.is_zero() {
-        //     let elapsed = now.duration_since(last_time)?;
-        //     if elapsed < last_delay {
-        //         time::sleep(last_delay - elapsed).await;
-        //     }
-        //     let now_last_time = history_arc.read().await.last().unwrap().time;
-        //     if now_last_time != last_history.time {
-        //         matched = false;
-        //     }
-        // };
+        let now = std::time::SystemTime::now();
+        if !last_delay.is_zero() {
+            let elapsed = now.duration_since(last_time)?;
+            if elapsed < last_delay {
+                tokio::time::sleep(last_delay - elapsed).await;
+            }
+            let now_last_time = history_arc.read().await.last().unwrap().time;
+            if now_last_time != last_history.time {
+                matched = false;
+            }
+        };
         if matched {
             hook().await?;
         }
