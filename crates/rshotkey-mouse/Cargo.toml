@@ -1,0 +1,13 @@
+[package]
+name = "rshotkey-mouse"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.87"
+tokio = { workspace = true }
+winapi = { version = "0.3.9", features = [
+    "errhandlingapi",
+    "libloaderapi",
+    "winuser",
+] }
